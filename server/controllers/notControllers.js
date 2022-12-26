@@ -264,6 +264,7 @@ const likePost = asyncHandler(async (req, res) => {
       return res
         .status(201)
         .json({ message: "Post unliked successfully!", unlikePost, post });
+        
     }
 
     if (!post.isLiked) {
