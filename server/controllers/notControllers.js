@@ -271,6 +271,7 @@ const likePost = asyncHandler(async (req, res) => {
      const newLike = await Post.updateOne(
         { _id: mongoose.Types.ObjectId(postId) },
         { $push: { likes: mongoose.Types.ObjectId(userId) }, isLiked: true }
+        
       );
 
       return res
