@@ -10,6 +10,7 @@ const eventEmitter = require('events').EventEmitter;
 const userRoutes = require('./routes/userRoutes');
 const notRoutes = require('./routes/postRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
+const authRoute = require('./routes/authRoute');
 
 
 
@@ -33,6 +34,9 @@ const port = process.env.PORT || 3000
 app.use('/', userRoutes)
 app.use('/', notRoutes)
 app.use('/', categoryRoutes)
+app.use('/', authRoute)
+
+
 
 
 

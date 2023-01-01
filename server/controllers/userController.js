@@ -1,7 +1,7 @@
 const User = require("../models/User");
 const asyncHandler = require("express-async-handler");
 const bcrypt = require('bcrypt')
-const {generateToken} = require('./authControllers')
+const {generateAccessToken, generateRefreshToken} = require('./authControllers')
 const joi = require('joi')
 
 
@@ -40,6 +40,7 @@ const registerUser = asyncHandler(async (req, res) => {
     email: email,
     isAdmin: false,
 
+
   })
     .then((user) => {
       res.status(201).json({
@@ -47,7 +48,9 @@ const registerUser = asyncHandler(async (req, res) => {
         username: user.username,
         email: user.email,
         password: user.password,
-        token: generateToken(user)
+        accessToken: generateAccessToken(user),
+        refreshToken: generateRefreshToken(user),
+        
       });
     })
     .catch((err) => {
@@ -95,23 +98,25 @@ const userLogin = asyncHandler(async(req,res)=>{
     const user = await User.findOne({email})
 
 
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found"
-      })
-
-    }
+    if (!user) {return res.status(404).json({message: "User not found"}) }
     const passMatches = await bcrypt.compare(password,user.password);
 
     if (passMatches) {
     
-      const token = generateToken(user);
+      const accessToken = generateAccessToken(user)
+      const refreshToken = generateRefreshToken(user)
+
 
       res.status(200).json({
         message: "Login successful",
         user: user.username,
-        token: token,
-        isAdmin: token.isAdmin
+        isAdmin: token.isAdmin,
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+
+
+
+
       })
     }
     else{

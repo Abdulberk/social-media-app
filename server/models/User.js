@@ -18,7 +18,12 @@ const userSchema = new mongoose.Schema({
         lowercase: true
 
 
+    }, profiePic: {
+        type: String,
+
     },
+
+ 
     password: {
         type: String,
         required: true,
@@ -50,7 +55,6 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }],
-
     
     })
 

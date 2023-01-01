@@ -14,12 +14,7 @@ const postSchema = new mongoose.Schema({
         default: new Date()
 
     },
-   isLiked: {
-        type:Boolean,
-        default:false
-        
-    },
-    
+
     user: {
         type:mongoose.Schema.Types.ObjectId,
         ref:'User'

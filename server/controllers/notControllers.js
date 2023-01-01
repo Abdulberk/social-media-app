@@ -245,46 +245,94 @@ const addCategories = asyncHandler(async (req, res) => {
   }
 });
 
+const followUser = asyncHandler(async (req, res) => {
+
+  const userId = req.user.id;
+  const friendId = req.params.id;
+
+  try {
+     
+    const user = await User.findById(userId);
+
+    if (!user) return res.status(404).json({ message: "User not found!" });
+
+    const friend = await User.findById(friendId);
+
+    if (!friend) return res.status(404).json({ message: "User not found!" });
+
+    if (friendId === userId) return res.status(400).json({ message: "You can't follow yourself!" });
+    
+    if (user.following.includes(mongoose.Types.ObjectId(friendId))) return res.status(400).json({ message: "You already follow this user!" });
+ 
+    const userAddedToMyFollowingList = await User.findByIdAndUpdate(userId, {
+      $push: { following: mongoose.Types.ObjectId(friendId) },
+    });
+
+    if (!userAddedToMyFollowingList) return res.status(400).json({ message: "User not followed for an unknown reason!" });
+
+    const userAddedToFollowersListOfFriend = await User.findByIdAndUpdate( friendId, {
+      $push: { followers: mongoose.Types.ObjectId(userId) },
+    });
+
+    const myFollowingList = await userAddedToMyFollowingList.populate({
+      path: 'following',
+      select: 'username'
+    });
+
+    const friendFollowersList = await userAddedToFollowersListOfFriend.populate({
+      path: 'followers',
+      select: 'username'
+    });
+
+    if (!userAddedToFollowersListOfFriend) return res.status(400).json({ message: "You were not added to the followers list of this user for an unknown reason!" });
+
+    return res.status(201).json({
+      message: "User followed successfully",
+      myFollowingList: myFollowingList.following,
+      myFollowingCount: myFollowingList.following.length,
+      friendFollowersList: friendFollowersList.followers,
+      friendFollowersCount: friendFollowersList.followers.length,
+    })
+
+  }catch(error){
+    return res.status(500).json({ message: error.message });
+  }
+
+});
 
 const likePost = asyncHandler(async (req, res) => {
   const postId = req.params.id;
   const userId = req.user.id;
 
   try {
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) return res.status(404).json({message: "User not found!"});
+
     const post = await Post.findById(postId);
 
-    if (!post) return res.status(404).json({ message: "Post not found!" });
+    if (!post) return res.status(404).json({message: "Post not found!"});
 
-    if (post.isLiked) {
-      const unlikePost = await Post.updateOne(
-        { _id: mongoose.Types.ObjectId(postId) },
-        { $pull: { likes: mongoose.Types.ObjectId(userId) }, isLiked: false }
+    const alreadyLiked = post.likes.includes(mongoose.Types.ObjectId(userId));
+    
+   if (alreadyLiked) return res.status(400).json({message: "You already liked this post!"});
 
-      );
-      return res
-        .status(201)
-        .json({ message: "Post unliked successfully!", unlikePost, post });
-        
-    }
+    const postLiked = await Post.findByIdAndUpdate(postId, {
+      $push: { likes: mongoose.Types.ObjectId(userId) },
+    });
+  
+    if (!postLiked) return res.status(400).json({message: "Post not liked for an unknown reason!"});
 
-    if (!post.isLiked) {
-     const newLike = await Post.updateOne(
-        { _id: mongoose.Types.ObjectId(postId) },
-        { $push: { likes: mongoose.Types.ObjectId(userId) }, isLiked: true }
-        
-      );
+    const populateAllLikes = await postLiked.populate({
+      path: 'likes',
+      select: 'username'
+    });
 
-      return res
-        .status(201)
-        .json({ message: "Post liked successfully!", newLike, post });
-    }
+return res.status(201).json({message: "Post liked successfully!", likesCount: populateAllLikes.likes.length, whoLiked: populateAllLikes.likes});
+   
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 });
-
-
-
 
 const getPostsCountInCategory = asyncHandler(async (req, res) => {
   const userId = req.user.id;
@@ -428,4 +476,5 @@ module.exports = {
   getAllCategories,
   getPostsCountInCategory,
   likePost,
+  followUser,
 };

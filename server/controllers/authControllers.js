@@ -21,19 +21,29 @@ const verifyToken = asyncHandler(async(req,res,next)=>{
             const decodedToken = jwt.verify(tokenAfterBearer,process.env.JWT_SECRET);
              if (decodedToken) {
                 req.user = decodedToken;
-             
 
-             
                 next();
 
              }
-
+                
         }
+
         catch(error){
 
-            res.status(500).json({
-                message:error.message
+        
+            if (error instanceof jwt.TokenExpiredError) {
+                return res.status(403).json({
+                    message:"Token expired!",
+                })
+            }
+            if (error instanceof jwt.JsonWebTokenError) {
+                return res.status(401).json({
+                    message:"Invalid token!"
+                })
+            }
 
+            return res.status(500).json({
+                message: error.message
             })
 
         }
@@ -42,21 +52,77 @@ const verifyToken = asyncHandler(async(req,res,next)=>{
     
 })
 
+const verifyRefreshToken = asyncHandler(async(req,res,next)=>{
+    const refreshToken = req.body.refreshToken;
+
+    if(!refreshToken){ return res.status(401).json({message:"No refresh token provided!"})}
+
+    try {
+        const decodedRefreshToken = jwt.verify(refreshToken,process.env.JWT_REFRESH_SECRET);
+        if (decodedRefreshToken) {
+            req.user = decodedRefreshToken;
+            next();
+        }
+
+
+
+    } catch (error) {
+        if (error instanceof jwt.TokenExpiredError) {
+            return res.status(403).json({
+                message:"Refresh token expired!",
+
+
+
+
+            })
+        }
+        if (error instanceof jwt.JsonWebTokenError) {
+            return res.status(401).json({
+                message:"Invalid refresh token!",
+            
+
+
+            })
+        }
+
+        return res.status(500).json({
+            message: error.message
 
 
 
 
 
-const generateToken = (user) => {
+        })
+    }
+
+
+})
+
+const generateRefreshToken = (user) => {
     return jwt.sign({
         id:user._id,
         isAdmin:user.isAdmin
-    },process.env.JWT_SECRET
+        },process.env.JWT_REFRESH_SECRET,{
+            expiresIn: process.env.JWT_REFRESH_EXPIRATION
+            }
+            )
+}
+
+
+const generateAccessToken = (user) => {
+    return jwt.sign({
+        id:user._id,
+        isAdmin:user.isAdmin
+    },process.env.JWT_SECRET,{
+        expiresIn: process.env.JWT_ACCESS_EXPIRATION
+    }
     )  
 }
 
 
 module.exports = {
     verifyToken,
-    generateToken
+    generateAccessToken,
+    generateRefreshToken,
+    verifyRefreshToken
 }
