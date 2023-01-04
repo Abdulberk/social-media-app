@@ -114,9 +114,6 @@ const userLogin = asyncHandler(async(req,res)=>{
         accessToken: accessToken,
         refreshToken: refreshToken,
 
-
-
-
       })
     }
     else{
@@ -124,6 +121,8 @@ const userLogin = asyncHandler(async(req,res)=>{
         message: "User or password is incorrect"
       })
     }
+
+
 
     
 

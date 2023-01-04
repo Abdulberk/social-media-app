@@ -319,8 +319,15 @@ const likePost = asyncHandler(async (req, res) => {
     const postLiked = await Post.findByIdAndUpdate(postId, {
       $push: { likes: mongoose.Types.ObjectId(userId) },
     });
-  
-    if (!postLiked) return res.status(400).json({message: "Post not liked for an unknown reason!"});
+
+    const addPostIdToUserLikes = await User.findByIdAndUpdate(userId, {
+      $push: { likes: mongoose.Types.ObjectId(postId) },
+    }
+      );
+
+    if (!postLiked || !addPostIdToUserLikes) return res.status(400).json({message: "Post not liked for an unknown reason!"});
+
+
 
     const populateAllLikes = await postLiked.populate({
       path: 'likes',
